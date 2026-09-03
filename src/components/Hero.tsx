@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   MapPin,
   Phone,
@@ -12,20 +12,48 @@ import {
   GraduationCap,
   Sparkles,
   Camera,
+  RotateCcw,
 } from 'lucide-react';
 import { contactInfo } from '../data/portfolioData';
+import defaultProfilePhoto from '../assets/images/1782225327503.png';
 
 interface HeroProps {
   onOpenResume: () => void;
-  profilePhoto: string;
-  onOpenPhotoModal: () => void;
+  profilePhoto?: string;
+  onPhotoChange?: (newPhoto: string) => void;
+  onResetPhoto?: () => void;
+  isCustomPhoto?: boolean;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   onOpenResume,
-  profilePhoto,
-  onOpenPhotoModal,
+  profilePhoto = defaultProfilePhoto,
+  onPhotoChange,
+  onResetPhoto,
+  isCustomPhoto = false,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFile = (file?: File) => {
+    if (!file || !onPhotoChange) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        onPhotoChange(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
   return (
     <section
       id="about"
@@ -166,8 +194,29 @@ export const Hero: React.FC<HeroProps> = ({
               
               <div className="relative rounded-3xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-6 shadow-xl space-y-6">
                 
-                {/* Photo with Badge & Interactive Edit Trigger */}
-                <div className="relative mx-auto w-44 h-44 sm:w-52 sm:h-52 rounded-2xl overflow-hidden shadow-md ring-4 ring-slate-100 dark:ring-slate-700 group">
+                {/* Hidden file input for direct upload */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFile(e.target.files?.[0])}
+                  className="hidden"
+                />
+
+                {/* Profile Photo with Verified Badge & Drag/Drop Upload */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  className={`relative mx-auto w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden shadow-lg transition-all ring-4 ${
+                    isDragging
+                      ? 'ring-blue-500 scale-105 bg-blue-50/20'
+                      : 'ring-slate-100 dark:ring-slate-700'
+                  } group`}
+                >
                   <img
                     id="profile-headshot-image"
                     src={profilePhoto}
@@ -177,24 +226,44 @@ export const Hero: React.FC<HeroProps> = ({
                   />
                   
                   {/* Verified status badge */}
-                  <div className="absolute bottom-2 right-2 bg-emerald-500 text-white p-1.5 rounded-full shadow-md z-10">
+                  <div className="absolute bottom-2.5 right-2.5 bg-emerald-500 text-white p-1.5 rounded-full shadow-md z-10 ring-2 ring-white dark:ring-slate-800">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
 
-                  {/* Edit / Change Photo Hover Button */}
+                  {/* Direct upload hover trigger */}
                   <button
-                    onClick={onOpenPhotoModal}
-                    className="absolute inset-0 bg-slate-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white cursor-pointer z-20 backdrop-blur-[2px]"
-                    title="Change / Upload Photo"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white cursor-pointer z-20 backdrop-blur-xs px-4 text-center"
+                    title="Click or drop 1782225327503.png here"
                   >
-                    <div className="p-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md transition-transform transform group-hover:scale-110">
-                      <Camera className="w-5 h-5" />
+                    <div className="p-2.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md transition-transform transform group-hover:scale-110">
+                      <Camera className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-black/40">
-                      Change Photo
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-black/50">
+                      Upload Exact Photo
+                    </span>
+                    <span className="text-[10px] text-slate-300">
+                      Drop 1782225327503.png or click to browse
                     </span>
                   </button>
                 </div>
+
+                {isCustomPhoto && (
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <CheckCircle2 className="w-3 h-3" /> Exact Photo Active
+                    </span>
+                    {onResetPhoto && (
+                      <button
+                        onClick={onResetPhoto}
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                        title="Reset to default"
+                      >
+                        <RotateCcw className="w-3 h-3" /> Reset
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Identity summary */}
                 <div className="text-center space-y-1">

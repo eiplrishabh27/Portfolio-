@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, Printer, Download, MapPin, Phone, Mail, Globe, Briefcase, GraduationCap, Award } from 'lucide-react';
-import defaultPhoto from '../assets/images/rishabh_mehra_profile_portrait_1788426701339.jpg';
+import defaultPhoto from '../assets/images/1782225327503.png';
 
 interface ResumeModalProps {
   isOpen: boolean;

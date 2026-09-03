@@ -12,7 +12,7 @@ import { ProjectsSection } from './components/ProjectsSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { ResumeModal } from './components/ResumeModal';
-import { PhotoSelectorModal, DEFAULT_PROFILE_PHOTO } from './components/PhotoSelectorModal';
+import defaultProfilePhoto from './assets/images/1782225327503.png';
 
 export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -27,23 +27,30 @@ export default function App() {
   });
 
   const [resumeModalOpen, setResumeModalOpen] = useState<boolean>(false);
-  const [photoModalOpen, setPhotoModalOpen] = useState<boolean>(false);
 
-  // Profile photo state initialized from localStorage or the exact edited default portrait
-  const [profilePhoto, setProfilePhoto] = useState<string>(() => {
+  // Exact profile photo state
+  const [customPhoto, setCustomPhoto] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('rishabh_custom_profile_photo');
-      if (saved) return saved;
+      return localStorage.getItem('rishabh_exact_profile_photo');
     }
-    return DEFAULT_PROFILE_PHOTO;
+    return null;
   });
 
-  const handleSelectPhoto = (newPhoto: string) => {
-    setProfilePhoto(newPhoto);
+  const handlePhotoChange = (newPhoto: string) => {
+    setCustomPhoto(newPhoto);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('rishabh_custom_profile_photo', newPhoto);
+      localStorage.setItem('rishabh_exact_profile_photo', newPhoto);
     }
   };
+
+  const handleResetPhoto = () => {
+    setCustomPhoto(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('rishabh_exact_profile_photo');
+    }
+  };
+
+  const currentPhoto = customPhoto || defaultProfilePhoto;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -74,8 +81,10 @@ export default function App() {
         {/* Hero / Overview Section */}
         <Hero
           onOpenResume={() => setResumeModalOpen(true)}
-          profilePhoto={profilePhoto}
-          onOpenPhotoModal={() => setPhotoModalOpen(true)}
+          profilePhoto={currentPhoto}
+          onPhotoChange={handlePhotoChange}
+          onResetPhoto={handleResetPhoto}
+          isCustomPhoto={!!customPhoto}
         />
 
         {/* Technical & Marketing Skills */}
@@ -98,15 +107,7 @@ export default function App() {
       <ResumeModal
         isOpen={resumeModalOpen}
         onClose={() => setResumeModalOpen(false)}
-        profilePhoto={profilePhoto}
-      />
-
-      {/* Profile Photo Selector & Direct Image Uploader Modal */}
-      <PhotoSelectorModal
-        isOpen={photoModalOpen}
-        onClose={() => setPhotoModalOpen(false)}
-        currentPhoto={profilePhoto}
-        onSelectPhoto={handleSelectPhoto}
+        profilePhoto={currentPhoto}
       />
     </div>
   );
